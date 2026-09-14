@@ -164,6 +164,7 @@ nav.abas button.ativa .ic{background:var(--azul-escuro);}
 .bolinha{width:10px;height:10px;border-radius:50%;display:inline-block;}
 .bolinha.usuario{background:#1a73e8;}
 .bolinha.apoio{background:var(--dourado);}
+.bolinha.posto{background:#0f9d58;}
 .bolinha.destino{background:var(--vermelho);}
 
 .oculto{display:none!important;}
@@ -222,6 +223,10 @@ nav.abas button.ativa .ic{background:var(--azul-escuro);}
 
 <!-- MAPA -->
 <section class="tela" id="tela-mapa">
+  <div class="filtros" id="filtrosCamadaMapa" style="margin-bottom:8px;">
+    <button class="filtro-chip ativo" id="filtroCamadaApoio">PONTOS DE APOIO</button>
+    <button class="filtro-chip" id="filtroCamadaPostos">POSTOS DE GASOLINA</button>
+  </div>
   <div id="mapa"></div>
   <div class="mapa-controles">
     <button class="btn-outline-fino" id="btnCentralizar">Minha localização</button>
@@ -231,13 +236,16 @@ nav.abas button.ativa .ic{background:var(--azul-escuro);}
   <div class="legenda-mapa">
     <span><span class="bolinha usuario"></span>Você</span>
     <span><span class="bolinha apoio"></span>Ponto de apoio</span>
+    <span><span class="bolinha posto"></span>Posto de gasolina</span>
     <span><span class="bolinha destino"></span>Aparecida</span>
   </div>
   <div class="aviso" style="margin-top:10px;">Para garantir o funcionamento do mapa, carregue o aplicativo enquanto estiver conectado à internet.</div>
+  <div class="aviso" style="margin-top:8px;">Os postos de gasolina exibidos são estabelecimentos reais cadastrados às margens da Rodovia Presidente Dutra. Ainda assim, confirme o funcionamento e o acesso seguro ao chegar — nem todo posto tem acesso direto para pedestres.</div>
 </section>
 
 <!-- PONTOS -->
 <section class="tela" id="tela-pontos">
+
   <input type="text" class="campo-busca" id="buscaPonto" placeholder="Pesquisar ponto de apoio, cidade ou km...">
   <div class="filtros" id="filtrosCidade"></div>
   <div class="filtros">
@@ -328,7 +336,11 @@ const PONTOS = [{"id": 1, "nome": "Mãezinha do Céu", "cidade": "Guarulhos", "k
 // Coordenadas REAIS sobre a pista/marginal da Rodovia Presidente Dutra
 // (obtidas de endereços comerciais cadastrados como "Rod. Pres. Dutra, Km X" em cada cidade,
 // não o centro administrativo das cidades — por isso o traçado fica alinhado à via de verdade).
-const ANCORAS = [[216, -23.4505557, -46.4614775], [201, -23.4037913, -46.3325506], [190, -23.3685324, -46.2352008], [177, -23.3238706, -46.1221534], [160, -23.2671384, -45.9607281], [146, -23.2124560, -45.8919265], [128, -23.1147877, -45.7129792], [115, -23.0501731, -45.6028442], [94.85, -22.9650256, -45.4290796], [82, -22.9087170, -45.3164836], [74, -22.8620744, -45.2376072], [70, -22.8505022, -45.2336768]]; // [km, lat, lng] do maior km (Guarulhos) para o menor (Aparecida)
+const ANCORAS = [[221, -23.4697088, -46.5117093], [216, -23.4505557, -46.4614775], [201, -23.4037913, -46.3325506], [190, -23.3685324, -46.2352008], [177, -23.3238706, -46.1221534], [160, -23.2671384, -45.9607281], [146, -23.2124560, -45.8919265], [128, -23.1147877, -45.7129792], [115, -23.0501731, -45.6028442], [94.85, -22.9650256, -45.4290796], [82, -22.9087170, -45.3164836], [74, -22.8620744, -45.2376072], [70, -22.8505022, -45.2336768]]; // [km, lat, lng] do maior km (Guarulhos) para o menor (Aparecida)
+
+// Postos de gasolina reais cadastrados sobre a Rodovia Presidente Dutra (endereço "Rod. Pres. Dutra, Km X"),
+// entre Guarulhos e Aparecida. Coordenadas de estabelecimentos reais, não estimadas.
+const POSTOS_GASOLINA = [{"nome": "Posto Petrobrás (km 221)", "cidade": "Guarulhos", "lat": -23.4697088, "lng": -46.5117093, "km": 221, "id": 1}, {"nome": "Rede Duque - Dutra", "cidade": "Guarulhos", "lat": -23.4302262, "lng": -46.4171842, "km": 210.7, "id": 2}, {"nome": "Posto Farol", "cidade": "Guarulhos", "lat": -23.4234774, "lng": -46.3945966, "km": 208.1, "id": 3}, {"nome": "Posto Carreteiro Petrobras", "cidade": "Guarulhos", "lat": -23.4687154, "lng": -46.5116532, "km": 221.0, "id": 4}, {"nome": "Auto Posto Cumbica", "cidade": "Guarulhos", "lat": -23.4504771, "lng": -46.4617389, "km": 216.0, "id": 5}, {"nome": "Posto Shell (Esq. Dutra)", "cidade": "Guarulhos", "lat": -23.4183996, "lng": -46.3826568, "km": 206.7, "id": 6}, {"nome": "Posto Sakamoto Open Mall (km 210,5)", "cidade": "Guarulhos", "lat": -23.4317657, "lng": -46.416894, "km": 210.7, "id": 7}, {"nome": "Posto Brasil Gas Santa Isabel", "cidade": "Santa Isabel", "lat": -23.3869472, "lng": -46.2726968, "km": 194.4, "id": 8}, {"nome": "Auto Posto São Cristovão (km 201,8)", "cidade": "Arujá", "lat": -23.4064473, "lng": -46.3353758, "km": 201.4, "id": 9}, {"nome": "Posto Zap (km 202)", "cidade": "Arujá", "lat": -23.406905, "lng": -46.3357432, "km": 201.4, "id": 10}, {"nome": "Graal Market Dutra (km 182,5)", "cidade": "Guararema", "lat": -23.3418603, "lng": -46.1536061, "km": 180.8, "id": 11}, {"nome": "Posto Monte Carlo (km 180)", "cidade": "Guararema", "lat": -23.3332251, "lng": -46.1377559, "km": 178.9, "id": 12}, {"nome": "Posto Ipiranga Rodo Rede", "cidade": "Guararema", "lat": -23.3332202, "lng": -46.137877, "km": 178.9, "id": 13}, {"nome": "Shell Gas Station (km 166)", "cidade": "Jacareí", "lat": -23.301085, "lng": -46.0168732, "km": 166.4, "id": 14}, {"nome": "Posto Dom Pedro Jacareí Urbano (km 159)", "cidade": "Jacareí", "lat": -23.2628574, "lng": -45.9561649, "km": 159.0, "id": 15}, {"nome": "Posto Shell (km 158,8)", "cidade": "Jacareí", "lat": -23.2664607, "lng": -45.9619279, "km": 160.1, "id": 16}, {"nome": "Auto Posto Lorinho Shell (km 159)", "cidade": "Jacareí", "lat": -23.2635329, "lng": -45.9571272, "km": 159.2, "id": 17}, {"nome": "Auto Posto Retão da Dutra (km 159,5)", "cidade": "Jacareí", "lat": -23.2668329, "lng": -45.9601743, "km": 159.9, "id": 18}, {"nome": "Posto Olá Caçapava - Dutra", "cidade": "Caçapava", "lat": -23.1201074, "lng": -45.720812, "km": 128.8, "id": 19}, {"nome": "K D D Oliveira Auto Desk", "cidade": "Caçapava", "lat": -23.0781481, "lng": -45.6572399, "km": 121.2, "id": 20}, {"nome": "Ruff", "cidade": "Taubaté", "lat": -23.01279, "lng": -45.524403, "km": 106.0, "id": 21}, {"nome": "Petrobras (km 94)", "cidade": "Pindamonhangaba", "lat": -22.9520634, "lng": -45.4055421, "km": 92.1, "id": 22}, {"nome": "Posto Sol da Dutra (km 101)", "cidade": "Pindamonhangaba", "lat": -22.9613855, "lng": -45.4227022, "km": 94.1, "id": 23}, {"nome": "Posto Olá Pindamonhangaba (km 101)", "cidade": "Pindamonhangaba", "lat": -22.9907297, "lng": -45.4797913, "km": 100.8, "id": 24}, {"nome": "Desk Dom Pedro Pinda North (km 86)", "cidade": "Pindamonhangaba", "lat": -22.926443, "lng": -45.352108, "km": 86.1, "id": 25}, {"nome": "Posto Dom Pedro - Pinda Sul", "cidade": "Pindamonhangaba", "lat": -22.9244644, "lng": -45.3512964, "km": 85.9, "id": 26}, {"nome": "Auto Posto Jóia da Dutra", "cidade": "Pindamonhangaba", "lat": -22.9247923, "lng": -45.3512007, "km": 85.9, "id": 27}, {"nome": "Gas Station Arco Íris Roseira (km 82)", "cidade": "Roseira", "lat": -22.908717, "lng": -45.3164836, "km": 82.0, "id": 28}, {"nome": "Posto Arco Íris de Aparecida (km 75)", "cidade": "Aparecida", "lat": -22.8741826, "lng": -45.2654856, "km": 76.6, "id": 29}, {"nome": "Posto Aparecida", "cidade": "Aparecida", "lat": -22.8481542, "lng": -45.2269248, "km": 70, "id": 30}, {"nome": "Posto Dom Pedro Aparecida (km 71)", "cidade": "Aparecida", "lat": -22.8420113, "lng": -45.2238087, "km": 70, "id": 31}, {"nome": "Posto Shell (km 71)", "cidade": "Aparecida", "lat": -22.8420356, "lng": -45.2237139, "km": 70, "id": 32}, {"nome": "Petrobras (Itaguassu)", "cidade": "Aparecida", "lat": -22.8557487, "lng": -45.2307875, "km": 71.3, "id": 33}];
 
 const DESTINO = {nome:"Santuário Nacional de Aparecida", lat:-22.8505022, lng:-45.2336768};
 const KM_TOTAL_INFORMATIVO = 190; // distância total aproximada citada no planejamento (pode variar conforme a rota real)
@@ -482,7 +494,8 @@ function onErroGps(err){
 }
 
 /* ---------- Mapa (Leaflet) ---------- */
-let map, marcadorUsuario, marcadoresPontos = [], marcadorDestino;
+let map, marcadorUsuario, marcadorDestino;
+let camadaApoio, camadaPostos; // grupos de camadas (para ligar/desligar via filtro)
 
 function iniciarMapa(){
   if(typeof L === "undefined"){
@@ -501,11 +514,23 @@ function iniciarMapa(){
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
+  // Camada: pontos de apoio (visível por padrão)
   const iconApoio = L.divIcon({className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#b8860b;border:2px solid #fff;box-shadow:0 0 2px rgba(0,0,0,.4);"></div>', iconSize:[14,14]});
+  camadaApoio = L.layerGroup();
   PONTOS.forEach(p=>{
-    const m = L.marker([p.lat,p.lng], {icon:iconApoio}).addTo(map);
+    const m = L.marker([p.lat,p.lng], {icon:iconApoio});
     m.bindPopup(popupPonto(p));
-    marcadoresPontos.push(m);
+    camadaApoio.addLayer(m);
+  });
+  camadaApoio.addTo(map);
+
+  // Camada: postos de gasolina reais sobre a Dutra (oculta por padrão, ligada pelo filtro)
+  const iconPosto = L.divIcon({className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#0f9d58;border:2px solid #fff;box-shadow:0 0 2px rgba(0,0,0,.4);"></div>', iconSize:[14,14]});
+  camadaPostos = L.layerGroup();
+  POSTOS_GASOLINA.forEach(p=>{
+    const m = L.marker([p.lat,p.lng], {icon:iconPosto});
+    m.bindPopup(popupPosto(p));
+    camadaPostos.addLayer(m);
   });
 
   const iconDestino = L.divIcon({className:'', html:'<div style="width:18px;height:18px;border-radius:50%;background:#b3261e;border:3px solid #fff;box-shadow:0 0 3px rgba(0,0,0,.5);"></div>', iconSize:[18,18]});
@@ -518,6 +543,16 @@ function iniciarMapa(){
   document.getElementById("btnZoomIn").addEventListener("click", ()=>map.zoomIn());
   document.getElementById("btnZoomOut").addEventListener("click", ()=>map.zoomOut());
 
+  // Filtro de camadas do mapa
+  document.getElementById("filtroCamadaApoio").addEventListener("click", (e)=>{
+    e.target.classList.toggle("ativo");
+    if(map.hasLayer(camadaApoio)) map.removeLayer(camadaApoio); else camadaApoio.addTo(map);
+  });
+  document.getElementById("filtroCamadaPostos").addEventListener("click", (e)=>{
+    e.target.classList.toggle("ativo");
+    if(map.hasLayer(camadaPostos)) map.removeLayer(camadaPostos); else camadaPostos.addTo(map);
+  });
+
   // Garante o tamanho correto assim que o container fica visível, e centraliza
   // no usuário se o GPS já estava ativo antes de abrir esta aba.
   setTimeout(()=>{
@@ -528,6 +563,13 @@ function iniciarMapa(){
     }
   }, 100);
 }
+
+function popupPosto(p){
+  return "<b>"+p.nome+"</b><br>"+p.cidade+" — Km aprox. "+p.km+
+    "<br><small>Posto real cadastrado na Rod. Presidente Dutra</small>" +
+    "<br><button onclick=\"navegarAte("+p.lat+","+p.lng+")\" style=\"margin-top:6px;padding:6px 10px;border:none;border-radius:6px;background:#0f9d58;color:#fff;font-weight:700;font-size:12px;\">Navegar</button>";
+}
+
 
 function popupPonto(p){
   return "<b>"+p.nome+"</b><br>"+p.cidade+" — Km "+p.km+(p.sentido? " ("+p.sentido+")":"")+
