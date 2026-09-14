@@ -6,7 +6,7 @@
 <title>Romaria Guarulhos → Aparecida 2026</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1c3d5a">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <style>
 :root{
   --azul-escuro:#1c3d5a;
@@ -310,7 +310,13 @@ nav.abas button.ativa .ic{background:var(--azul-escuro);}
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// Se o CDN principal falhar (bloqueio de rede, instabilidade, etc.), tenta um CDN alternativo.
+if (typeof L === "undefined") {
+  document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>');
+}
+</script>
 <script>
 /* =========================================================
    DADOS DOS PONTOS DE APOIO - Romaria 2026
@@ -479,6 +485,16 @@ function onErroGps(err){
 let map, marcadorUsuario, marcadoresPontos = [], marcadorDestino;
 
 function iniciarMapa(){
+  if(typeof L === "undefined"){
+    // A biblioteca do mapa não carregou (provavelmente por falta de internet
+    // no momento em que o aplicativo foi aberto pela primeira vez).
+    document.getElementById("mapa").innerHTML =
+      '<div style="padding:20px;text-align:center;color:#7a241d;font-size:14px;">' +
+      'Não foi possível carregar o mapa.<br>Verifique sua conexão com a internet e ' +
+      '<button onclick="location.reload()" style="margin-top:10px;padding:9px 14px;border-radius:7px;border:none;background:#1c3d5a;color:#fff;font-weight:700;">tente novamente</button>' +
+      '</div>';
+    return;
+  }
   map = L.map('mapa', {zoomControl:false}).setView([-23.0, -45.9], 8);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
